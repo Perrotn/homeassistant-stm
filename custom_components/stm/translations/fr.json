@@ -1,0 +1,52 @@
+{
+  "title": "STM – Société de transport de Montréal",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Clé API STM",
+        "description": "Obtenez votre clé API gratuite sur : {portal_url}",
+        "data": {
+          "api_key": "Clé API"
+        }
+      },
+      "type": {
+        "title": "Que voulez-vous surveiller ?",
+        "data": {
+          "entry_type": "Type de surveillance"
+        }
+      },
+      "stop": {
+        "title": "Configuration de l'arrêt",
+        "description": "Trouvez votre numéro d'arrêt sur : {stop_search_url}",
+        "data": {
+          "stop_id": "Numéro d'arrêt (ex: 52934)",
+          "route_id": "Numéro de ligne — optionnel (ex: 94)",
+          "max_departures": "Nombre de prochains départs à afficher"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Clé API invalide. Vérifiez sur le portail STM.",
+      "cannot_connect": "Impossible de se connecter à l'API STM.",
+      "stop_required": "Veuillez entrer un numéro d'arrêt.",
+      "stop_not_found": "Ce numéro d'arrêt n'existe pas dans le réseau STM.",
+      "unknown": "Erreur inattendue. Consultez les logs Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Cette configuration existe déjà.",
+      "no_options": "Aucune option modifiable pour ce type."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de l'arrêt",
+        "data": {
+          "stop_id": "Numéro d'arrêt",
+          "route_id": "Numéro de ligne (optionnel)",
+          "max_departures": "Nombre de prochains départs"
+        }
+      }
+    }
+  }
+}

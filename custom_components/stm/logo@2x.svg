@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Blue rounded square background — STM brand blue #0064A7 -->
+  <rect x="0" y="0" width="200" height="200" rx="36" ry="36" fill="#0064A7"/>
+  <!-- White "stm" lowercase bold — matching 2010 identity -->
+  <text
+    x="100" y="138"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="100"
+    letter-spacing="-2"
+    fill="#FFFFFF">stm</text>
+</svg>

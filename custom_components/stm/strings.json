@@ -1,0 +1,52 @@
+{
+  "title": "STM – Société de transport de Montréal",
+  "config": {
+    "step": {
+      "user": {
+        "title": "STM API Key",
+        "description": "Get your free API key at: {portal_url}",
+        "data": {
+          "api_key": "API Key"
+        }
+      },
+      "type": {
+        "title": "What do you want to monitor?",
+        "data": {
+          "entry_type": "Monitoring type"
+        }
+      },
+      "stop": {
+        "title": "Stop Configuration",
+        "description": "Find your stop number at: {stop_search_url}",
+        "data": {
+          "stop_id": "Stop number (e.g. 52934)",
+          "route_id": "Route number — optional (e.g. 94)",
+          "max_departures": "Number of upcoming departures to display"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key. Please check on the STM developer portal.",
+      "cannot_connect": "Unable to connect to the STM API. Check your internet connection.",
+      "stop_required": "Please enter a stop number.",
+      "stop_not_found": "This stop number does not exist in the STM network.",
+      "unknown": "Unexpected error. Check the Home Assistant logs."
+    },
+    "abort": {
+      "already_configured": "This configuration already exists.",
+      "no_options": "No editable options for this type."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Stop Options",
+        "data": {
+          "stop_id": "Stop number",
+          "route_id": "Route number (optional)",
+          "max_departures": "Number of upcoming departures"
+        }
+      }
+    }
+  }
+}

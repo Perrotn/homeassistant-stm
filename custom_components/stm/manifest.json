@@ -1,0 +1,12 @@
+{
+  "domain": "stm",
+  "name": "STM – Société de transport de Montréal",
+  "version": "2.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/Perrotn/homeassistant-stm",
+  "issue_tracker": "https://github.com/Perrotn/homeassistant-stm/issues",
+  "requirements": ["protobuf>=4.21.0", "gtfs-realtime-bindings>=1.0.0"],
+  "dependencies": [],
+  "codeowners": ["@Perrotn"],
+  "iot_class": "cloud_polling"
+}
