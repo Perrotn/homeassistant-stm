@@ -1,0 +1,8 @@
+{
+  "name": "STM – Société de transport de Montréal",
+  "content_in_root": false,
+  "render_readme": false,
+  "homeassistant": "2023.1.0",
+  "country": ["CA"],
+  "category": "integration"
+}
