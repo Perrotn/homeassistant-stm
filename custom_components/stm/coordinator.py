@@ -35,25 +35,25 @@ _LOGGER = logging.getLogger(__name__)
 _MTL_TZ = ZoneInfo(STM_TIMEZONE)
 
 # GTFS-RT schedule_relationship codes
-_SCHED_REL = {0: "Prévu", 1: "Ajouté", 2: "Annulé", 3: "Non prévu", 5: "Dupliqué"}
-_STOP_REL  = {0: "Prévu", 1: "Sauté", 2: "Sans données"}
+_SCHED_REL = {0: "Scheduled", 1: "Added", 2: "Cancelled", 3: "Unscheduled", 5: "Duplicated"}
+_STOP_REL  = {0: "Scheduled", 1: "Skipped", 2: "No data"}
 
 # Vehicle current_status codes
 _VEH_STATUS = {
-    0: "En approche",
-    1: "À l'arrêt",
-    2: "En transit",
+    0: "Approaching",
+    1: "Stopped",
+    2: "In transit",
 }
 
 # Occupancy status codes
 _OCCUPANCY = {
-    0: "Vide",
-    1: "Beaucoup de places",
-    2: "Peu de places",
-    3: "Debout seulement",
-    4: "Bondé debout",
-    5: "Plein",
-    6: "Données non disponibles",
+    0: "Empty",
+    1: "Many seats available",
+    2: "Few seats available",
+    3: "Standing only",
+    4: "Crushed standing",
+    5: "Full",
+    6: "No data available",
 }
 
 
@@ -76,20 +76,20 @@ def _fmt_ts(ts: int | None) -> str | None:
 
 def _resumption_label(end_ts: int | None) -> str:
     if not end_ts:
-        return "Durée indéterminée"
+        return "Indefinite duration"
     end_dt = datetime.fromtimestamp(end_ts, tz=_MTL_TZ)
     now    = datetime.now(tz=_MTL_TZ)
     delta  = end_dt - now
     if delta.total_seconds() < 0:
-        return "Reprise en cours"
+        return "Resumption in progress"
     total_min = int(delta.total_seconds() / 60)
     if total_min < 60:
-        return f"Reprise prévue dans ~{total_min} min ({end_dt.strftime('%H:%M')})"
+        return f"Expected resumption in ~{total_min} min ({end_dt.strftime('%H:%M')})"
     if delta.days == 0:
-        return f"Reprise prévue à {end_dt.strftime('%H:%M')}"
+        return f"Expected resumption at {end_dt.strftime('%H:%M')}"
     if delta.days == 1:
-        return f"Reprise prévue demain à {end_dt.strftime('%H:%M')}"
-    return f"Reprise prévue le {end_dt.strftime('%d %b à %H:%M')}"
+        return f"Expected resumption tomorrow at {end_dt.strftime('%H:%M')}"
+    return f"Expected resumption on {end_dt.strftime('%d %b at %H:%M')}"
 
 
 # ── Shared stop coordinator ───────────────────────────────────────────────────
@@ -123,7 +123,7 @@ class STMStopCoordinator(DataUpdateCoordinator):
             trip = tu.trip
 
             # Trip-level schedule relationship
-            sched_rel = _SCHED_REL.get(trip.schedule_relationship, "Prévu")
+            sched_rel = _SCHED_REL.get(trip.schedule_relationship, "Scheduled")
 
             for stu in tu.stop_time_update:
                 sid = stu.stop_id
@@ -153,7 +153,7 @@ class STMStopCoordinator(DataUpdateCoordinator):
                 minutes = int((dep_utc - now).total_seconds() / 60)
 
                 # Stop-level relationship (SKIPPED = arrêt sauté)
-                stop_rel = _STOP_REL.get(stu.schedule_relationship, "Prévu")
+                stop_rel = _STOP_REL.get(stu.schedule_relationship, "Scheduled")
 
                 stop_deps.setdefault(sid, []).append({
                     # Core
@@ -169,9 +169,9 @@ class STMStopCoordinator(DataUpdateCoordinator):
                     # Status
                     "schedule_relationship": sched_rel,
                     "stop_relationship":     stop_rel,
-                    "is_skipped":     stop_rel == "Sauté",
-                    "is_added":       sched_rel == "Ajouté",
-                    "is_cancelled":   sched_rel == "Annulé",
+                    "is_skipped":     stop_rel == "Skipped",
+                    "is_added":       sched_rel == "Added",
+                    "is_cancelled":   sched_rel == "Cancelled",
                 })
 
         for sid in stop_deps:
@@ -186,7 +186,7 @@ class STMStopCoordinator(DataUpdateCoordinator):
             v = entity.vehicle
 
             occupancy_raw = v.occupancy_status if v.HasField("occupancy_status") else None
-            occupancy_str = _OCCUPANCY.get(occupancy_raw, "Données non disponibles") if occupancy_raw is not None else None
+            occupancy_str = _OCCUPANCY.get(occupancy_raw, "No data available") if occupancy_raw is not None else None
 
             vehicles.append({
                 "id":              entity.id,
@@ -202,7 +202,7 @@ class STMStopCoordinator(DataUpdateCoordinator):
                 "speed_kmh":       round(v.position.speed * 3.6, 1) if v.position.speed else 0,
                 # Stop info
                 "current_stop_id": v.stop_id,
-                "current_status":  _VEH_STATUS.get(v.current_status, "En transit"),
+                "current_status":  _VEH_STATUS.get(v.current_status, "In transit"),
                 # Occupancy
                 "occupancy":       occupancy_str,
                 "timestamp":       _fmt_ts(v.timestamp) if v.timestamp else None,
@@ -282,15 +282,15 @@ class STMMetroCoordinator(DataUpdateCoordinator):
         result = {
             key: {
                 "status":         STATUS_UNKNOWN,
-                "message":        "Données non disponibles",
+                "message":        "No data available",
                 "message_en":     "",
-                "avis_mineurs":   [],
-                "perturbations":  [],
-                "arrets_touches": [],
+                "minor_notices":   [],
+                "disruptions":  [],
+                "affected_stops": [],
                 "directions":     [],
                 "debut":          None,
-                "reprise_prevue": None,
-                "reprise_ts":     None,
+                "expected_resumption": None,
+                "resumption_time":     None,
             }
             for key in METRO_LINES
         }
@@ -371,7 +371,7 @@ class STMMetroCoordinator(DataUpdateCoordinator):
                     "status":         STATUS_INTERROMPU if interrupted else STATUS_PERTURBE,
                     "message":        main["desc_fr"],
                     "message_en":     main["desc_en"],
-                    "perturbations":  [
+                    "disruptions":  [
                         {
                             "message":    e["desc_fr"],
                             "message_en": e["desc_en"],
@@ -382,7 +382,7 @@ class STMMetroCoordinator(DataUpdateCoordinator):
                         }
                         for e in dis
                     ],
-                    "avis_mineurs": [
+                    "minor_notices": [
                         {
                             "message":    e["desc_fr"],
                             "message_en": e["desc_en"],
@@ -392,19 +392,19 @@ class STMMetroCoordinator(DataUpdateCoordinator):
                         }
                         for e in min_
                     ],
-                    "arrets_touches": all_stops,
+                    "affected_stops": all_stops,
                     "directions":     all_directions,
                     "debut":          main["debut"],
-                    "reprise_prevue": _resumption_label(end_ts),
-                    "reprise_ts":     _fmt_ts(end_ts),
+                    "expected_resumption": _resumption_label(end_ts),
+                    "resumption_time":     _fmt_ts(end_ts),
                 }
             elif nor:
                 result[lk] = {
                     "status":         STATUS_NORMAL,
-                    "message":        "Service normal",
+                    "message":        "Normal service",
                     "message_en":     "Normal service",
-                    "perturbations":  [],
-                    "avis_mineurs":   [
+                    "disruptions":  [],
+                    "minor_notices":   [
                         {
                             "message":    e["desc_fr"],
                             "message_en": e["desc_en"],
@@ -414,19 +414,19 @@ class STMMetroCoordinator(DataUpdateCoordinator):
                         }
                         for e in min_
                     ],
-                    "arrets_touches": [],
+                    "affected_stops": [],
                     "directions":     [],
                     "debut":          None,
-                    "reprise_prevue": None,
-                    "reprise_ts":     None,
+                    "expected_resumption": None,
+                    "resumption_time":     None,
                 }
             elif min_:
                 result[lk] = {
                     "status":         STATUS_NORMAL,
-                    "message":        "Service normal",
+                    "message":        "Normal service",
                     "message_en":     "Normal service",
-                    "perturbations":  [],
-                    "avis_mineurs":   [
+                    "disruptions":  [],
+                    "minor_notices":   [
                         {
                             "message":    e["desc_fr"],
                             "message_en": e["desc_en"],
@@ -436,24 +436,24 @@ class STMMetroCoordinator(DataUpdateCoordinator):
                         }
                         for e in min_
                     ],
-                    "arrets_touches": [],
+                    "affected_stops": [],
                     "directions":     [],
                     "debut":          None,
-                    "reprise_prevue": None,
-                    "reprise_ts":     None,
+                    "expected_resumption": None,
+                    "resumption_time":     None,
                 }
             else:
                 result[lk] = {
                     "status":         STATUS_UNKNOWN,
-                    "message":        "Aucune donnée",
+                    "message":        "No data",
                     "message_en":     "",
-                    "perturbations":  [],
-                    "avis_mineurs":   [],
-                    "arrets_touches": [],
+                    "disruptions":  [],
+                    "minor_notices":   [],
+                    "affected_stops": [],
                     "directions":     [],
                     "debut":          None,
-                    "reprise_prevue": None,
-                    "reprise_ts":     None,
+                    "expected_resumption": None,
+                    "resumption_time":     None,
                 }
 
         return result

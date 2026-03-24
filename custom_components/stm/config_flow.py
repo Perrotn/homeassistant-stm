@@ -70,7 +70,7 @@ class STMConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id("stm_metro_status")
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title="STM – État du métro",
+                    title="STM – Metro status",
                     data={CONF_API_KEY: self._api_key, CONF_ENTRY_TYPE: ENTRY_TYPE_METRO},
                 )
             else:
@@ -109,9 +109,9 @@ class STMConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     await self.async_set_unique_id(f"stm_stop_{stop_id}_{route_id}")
                     self._abort_if_unique_id_configured()
-                    label = f"STM – Arrêt {stop_id}"
+                    label = f"STM – Stop {stop_id}"
                     if route_id:
-                        label += f" / Ligne {route_id}"
+                        label += f" / Line {route_id}"
                     return self.async_create_entry(
                         title=label,
                         data={

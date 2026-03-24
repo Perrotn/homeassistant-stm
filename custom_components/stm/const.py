@@ -39,17 +39,17 @@ STM_TIMEZONE = "America/Toronto"
 
 # ── Metro lines ───────────────────────────────────────────────────────────────
 METRO_LINES = {
-    "verte":  {"name": "Ligne Verte",  "color": "#008C00", "route_id": "1"},
-    "orange": {"name": "Ligne Orange", "color": "#F6821F", "route_id": "2"},
-    "jaune":  {"name": "Ligne Jaune",  "color": "#FFD700", "route_id": "4"},
-    "bleue":  {"name": "Ligne Bleue",  "color": "#0083CA", "route_id": "5"},
+    "verte":  {"name": "Green Line",  "color": "#008C00", "route_id": "1"},
+    "orange": {"name": "Orange Line", "color": "#F6821F", "route_id": "2"},
+    "jaune":  {"name": "Yellow Line",  "color": "#FFD700", "route_id": "4"},
+    "bleue":  {"name": "Blue Line",  "color": "#0083CA", "route_id": "5"},
 }
 
 # ── Service status ────────────────────────────────────────────────────────────
 STATUS_NORMAL     = "Normal"
-STATUS_PERTURBE   = "Perturbé"
-STATUS_INTERROMPU = "Interrompu"
-STATUS_UNKNOWN    = "Inconnu"
+STATUS_PERTURBE   = "Disrupted"
+STATUS_INTERROMPU = "Interrupted"
+STATUS_UNKNOWN    = "Unknown"
 
 # ── Keywords for alert classification ────────────────────────────────────────
 SERVICE_DISRUPTION_KW = [

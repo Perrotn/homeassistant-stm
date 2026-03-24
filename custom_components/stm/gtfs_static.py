@@ -64,7 +64,7 @@ class GTFSStaticManager:
                     _LOGGER.error("GTFS cache parse failed: %s", err2)
 
     def stop_name(self, stop_id: str) -> str:
-        return self.stops.get(stop_id, {}).get("name", f"Arrêt {stop_id}")
+        return self.stops.get(stop_id, {}).get("name", f"Stop {stop_id}")
 
     def stop_coords(self, stop_id: str) -> tuple[float, float] | None:
         s = self.stops.get(stop_id)
@@ -128,7 +128,7 @@ class GTFSStaticManager:
                 if not sid:
                     continue
                 self.stops[sid] = {
-                    "name": row.get("stop_name", f"Arrêt {sid}").strip(),
+                    "name": row.get("stop_name", f"Stop {sid}").strip(),
                     "lat":  float(row.get("stop_lat", 0) or 0),
                     "lon":  float(row.get("stop_lon", 0) or 0),
                 }

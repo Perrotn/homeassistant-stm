@@ -32,8 +32,8 @@ _STATUS_ICON = {
 }
 
 _DIRECTION_LABEL = {
-    "N": "Nord", "S": "Sud", "E": "Est", "W": "Ouest",
-    "North": "Nord", "South": "Sud", "East": "Est", "West": "Ouest",
+    "N": "North", "S": "South", "E": "East", "W": "West",
+    "North": "North", "South": "South", "East": "East", "West": "West",
 }
 
 
@@ -71,7 +71,7 @@ class STMMetroLineSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
         self._line_key  = line_key
         self._line_info = line_info
         self._attr_unique_id = f"stm_metro_{line_key}"
-        self._attr_name      = f"STM Métro {line_info['name']}"
+        self._attr_name      = f"STM Metro {line_info['name']}"
 
     @property
     def native_value(self) -> str:
@@ -90,35 +90,35 @@ class STMMetroLineSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
         attrs: dict[str, Any] = {
             # ── Identification ────────────────────────────────────────────────
             "route_id":        self._line_info["route_id"],
-            "couleur":         self._line_info["color"],
+            "color":         self._line_info["color"],
             # ── Status ────────────────────────────────────────────────────────
             "message":         d.get("message", ""),
             "message_en":      d.get("message_en", ""),
             # ── Minor notices (access closures, elevators…) ───────────────────
-            "avis_mineurs":    d.get("avis_mineurs", []),
-            "nb_avis_mineurs": len(d.get("avis_mineurs", [])),
+            "minor_notices":    d.get("minor_notices", []),
+            "nb_minor_notices": len(d.get("minor_notices", [])),
             # ── Metadata ──────────────────────────────────────────────────────
-            "derniere_maj_api": data.get("api_timestamp"),
+            "last_api_update": data.get("api_timestamp"),
             "last_update":      data.get("last_update", ""),
         }
 
         # Only show disruption details when there IS a disruption
         if status not in (STATUS_NORMAL, STATUS_UNKNOWN):
-            perturbations = d.get("perturbations", [])
+            perturbations = d.get("disruptions", [])
             directions    = d.get("directions", [])
-            arrets_touches = d.get("arrets_touches", [])
+            arrets_touches = d.get("affected_stops", [])
 
             attrs.update({
-                "perturbations":      perturbations,
-                "nb_perturbations":   len(perturbations),
-                "debut_perturbation": d.get("debut"),
-                "reprise_prevue":     d.get("reprise_prevue", "Durée indéterminée"),
-                "reprise_ts":         d.get("reprise_ts"),
-                "directions_touchees": [
+                "disruptions":      perturbations,
+                "nb_disruptions":   len(perturbations),
+                "disruption_start": d.get("debut"),
+                "expected_resumption":     d.get("expected_resumption", "Indefinite duration"),
+                "resumption_time":         d.get("resumption_time"),
+                "affected_directions": [
                     _DIRECTION_LABEL.get(dr, dr) for dr in directions
                 ],
-                "arrets_touches":     arrets_touches,
-                "nb_arrets_touches":  len(arrets_touches),
+                "affected_stops":     arrets_touches,
+                "nb_affected_stops":  len(arrets_touches),
             })
 
         return attrs
@@ -139,9 +139,9 @@ class STMMetroLineSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
 
 class STMAlertSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
     _attr_unique_id                  = "stm_metro_alertes"
-    _attr_name                       = "STM Alertes métro"
+    _attr_name                       = "STM Metro alerts"
     _attr_icon                       = "mdi:alert-circle-outline"
-    _attr_native_unit_of_measurement = "perturbations"
+    _attr_native_unit_of_measurement = "disruptions"
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator)
@@ -160,23 +160,23 @@ class STMAlertSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
             entry: dict[str, Any] = {
                 "ligne":         METRO_LINES[k]["name"],
                 "route_id":      METRO_LINES[k]["route_id"],
-                "couleur":       METRO_LINES[k]["color"],
-                "statut":        d.get("status", ""),
+                "color":       METRO_LINES[k]["color"],
+                "status":        d.get("status", ""),
                 "message":       d.get("message", ""),
                 "message_en":    d.get("message_en", ""),
                 "debut":         d.get("debut"),
-                "reprise_prevue": d.get("reprise_prevue", "Durée indéterminée"),
-                "reprise_ts":    d.get("reprise_ts"),
+                "expected_resumption": d.get("expected_resumption", "Indefinite duration"),
+                "resumption_time":    d.get("resumption_time"),
                 "directions":    [_DIRECTION_LABEL.get(dr, dr) for dr in d.get("directions", [])],
-                "arrets_touches": d.get("arrets_touches", []),
-                "nb_arrets":     len(d.get("arrets_touches", [])),
+                "affected_stops": d.get("affected_stops", []),
+                "nb_stops":     len(d.get("affected_stops", [])),
             }
             perturbations.append(entry)
 
         # All minor notices across all lines
         all_minors = []
         for key, info in METRO_LINES.items():
-            for m in self._status().get(key, {}).get("avis_mineurs", []):
+            for m in self._status().get(key, {}).get("minor_notices", []):
                 all_minors.append({
                     "ligne":      info["name"],
                     "route_id":   info["route_id"],
@@ -188,11 +188,11 @@ class STMAlertSensor(CoordinatorEntity[STMMetroCoordinator], SensorEntity):
                 })
 
         return {
-            "perturbations":        perturbations,
-            "nb_perturbations":     len(perturbations),
-            "avis_mineurs":         all_minors,
-            "nb_avis_mineurs":      len(all_minors),
-            "derniere_maj_api":     data.get("api_timestamp"),
+            "disruptions":        perturbations,
+            "nb_disruptions":     len(perturbations),
+            "minor_notices":         all_minors,
+            "nb_minor_notices":      len(all_minors),
+            "last_api_update":     data.get("api_timestamp"),
             "last_update":          data.get("last_update", ""),
         }
 
@@ -226,7 +226,7 @@ class STMDepartureSensor(CoordinatorEntity[STMStopCoordinator], SensorEntity):
         self._gtfs     = gtfs
         self._attr_unique_id = f"stm_stop_{stop_id}_{route_id}"
         route_label = f" ligne {route_id}" if route_id else ""
-        self._attr_name = f"STM Arrêt {stop_id}{route_label}"
+        self._attr_name = f"STM Stop {stop_id}{route_label}"
 
     @property
     def name(self) -> str:
@@ -255,9 +255,9 @@ class STMDepartureSensor(CoordinatorEntity[STMStopCoordinator], SensorEntity):
 
             delay_min  = round(d["delay_sec"] / 60) if d.get("delay_sec") else 0
             delay_str  = (
-                f"+{delay_min} min de retard" if delay_min > 0
-                else f"{abs(delay_min)} min d'avance" if delay_min < 0
-                else "À l'heure"
+                f"+{delay_min} min late" if delay_min > 0
+                else f"{abs(delay_min)} min early" if delay_min < 0
+                else "On time"
             )
 
             dep_entry: dict[str, Any] = {
@@ -266,24 +266,24 @@ class STMDepartureSensor(CoordinatorEntity[STMStopCoordinator], SensorEntity):
                 "direction":      headsign,
                 "minutes":        d["minutes"],
                 "scheduled_time": dep_local.strftime("%H:%M"),
-                "ponctualite":    delay_str,
-                "retard_sec":     d.get("delay_sec", 0),
+                "punctuality":    delay_str,
+                "delay_sec":     d.get("delay_sec", 0),
             }
 
             # Only add status if not normal
             if d.get("is_cancelled"):
-                dep_entry["statut"] = "Annulé"
+                dep_entry["status"] = "Cancelled"
             elif d.get("is_skipped"):
-                dep_entry["statut"] = "Arrêt sauté"
+                dep_entry["status"] = "Stop skipped"
             elif d.get("is_added"):
-                dep_entry["statut"] = "Service ajouté"
+                dep_entry["status"] = "Added service"
             else:
-                dep_entry["statut"] = "Prévu"
+                dep_entry["status"] = "Scheduled"
 
             formatted.append(dep_entry)
 
         # ── Stop info from GTFS ───────────────────────────────────────────────
-        stop_name  = f"Arrêt {self._stop_id}"
+        stop_name  = f"Stop {self._stop_id}"
         stop_lat   = stop_lon = None
         stop_valid = False
 
@@ -302,33 +302,33 @@ class STMDepartureSensor(CoordinatorEntity[STMStopCoordinator], SensorEntity):
                     "label":        v["label"],
                     "latitude":     v["latitude"],
                     "longitude":    v["longitude"],
-                    "vitesse_kmh":  v["speed_kmh"],
-                    "cap":          v["bearing"],
-                    "statut":       v["current_status"],
-                    "occupation":   v["occupancy"],
-                    "arret_actuel": v["current_stop_id"],
+                    "speed_kmh":  v["speed_kmh"],
+                    "bearing":          v["bearing"],
+                    "status":       v["current_status"],
+                    "occupancy":   v["occupancy"],
+                    "current_stop": v["current_stop_id"],
                 }
                 for v in data["vehicles_by_route"].get(self._route_id, [])
             ]
 
         # ── Summary string ────────────────────────────────────────────────────
-        next_summary = "Aucun départ"
+        next_summary = "No departures"
         if formatted:
             f0    = formatted[0]
             dest  = f" → {f0['direction']}" if f0["direction"] else ""
-            delay = f" ({f0['ponctualite']})" if f0["retard_sec"] != 0 else ""
-            next_summary = f"Ligne {f0['route']}{dest} dans {f0['minutes']} min ({f0['scheduled_time']}){delay}"
+            delay = f" ({f0['ponctualite']})" if f0["delay_sec"] != 0 else ""
+            next_summary = f"Line {f0['route']}{dest} in {f0['minutes']} min ({f0['scheduled_time']}){delay}"
 
         attrs: dict[str, Any] = {
             # Departures list
             ATTR_DEPARTURES:    formatted,
-            "nb_departs":       len(formatted),
-            "prochain_depart":  next_summary,
+            "nb_departures":       len(formatted),
+            "next_departure":  next_summary,
             # Stop info
             "stop_id":          self._stop_id,
             "stop_name":        stop_name,
-            "stop_valide":      stop_valid,
-            "route_filter":     self._route_id or "tous",
+            "stop_valid":      stop_valid,
+            "route_filter":     self._route_id or "all",
             # Metadata
             "last_update":      data.get("last_update"),
         }
@@ -338,8 +338,8 @@ class STMDepartureSensor(CoordinatorEntity[STMStopCoordinator], SensorEntity):
             attrs["stop_longitude"] = stop_lon
 
         if nearby_vehicles:
-            attrs["vehicules_en_route"] = nearby_vehicles
-            attrs["nb_vehicules"]       = len(nearby_vehicles)
+            attrs["vehicles_on_route"] = nearby_vehicles
+            attrs["nb_vehicles"]       = len(nearby_vehicles)
 
         return attrs
 

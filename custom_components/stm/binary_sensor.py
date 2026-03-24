@@ -1,4 +1,4 @@
-"""Binary sensor platform — one per metro line (Normal / Perturbé)."""
+"""Binary sensor platform — one per metro line."""
 from __future__ import annotations
 
 import logging
@@ -51,7 +51,7 @@ class STMMetroLineBinarySensor(CoordinatorEntity[STMMetroCoordinator], BinarySen
         self._line_key  = line_key
         self._line_info = line_info
         self._attr_unique_id = f"stm_metro_problem_{line_key}"
-        self._attr_name      = f"STM Perturbation {line_info['name']}"
+        self._attr_name      = f"STM Disruption {line_info['name']}"
 
     @property
     def is_on(self) -> bool:
@@ -69,9 +69,9 @@ class STMMetroLineBinarySensor(CoordinatorEntity[STMMetroCoordinator], BinarySen
         return {
             "statut":        d.get("status", STATUS_UNKNOWN),
             "message":       d.get("message", ""),
-            "perturbations": d.get("perturbations", []),
-            "avis_mineurs":  d.get("avis_mineurs", []),
-            "couleur":       self._line_info["color"],
+            "disruptions": d.get("disruptions", []),
+            "minor_notices":  d.get("minor_notices", []),
+            "color":       self._line_info["color"],
             "route_id":      self._line_info["route_id"],
         }
 
